@@ -31,8 +31,8 @@ const Login = () => {
       const { token, data } = res.data;
       const user = data.user || data.admin;
 
-      if (!["superAdmin", "admin"].includes(user?.role)) {
-        setError("Access denied. This panel is for Branch Admins only.");
+      if (!["superAdmin", "admin", "branchManager"].includes(user?.role)) {
+        setError("Access denied. This panel is for Branch Managers only.");
         return;
       }
       login({ ...user, token });

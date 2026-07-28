@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     if (saved && token) {
       try {
         const parsed = JSON.parse(saved);
-        if (['superAdmin', 'admin'].includes(parsed?.role)) {
+        if (['superAdmin', 'admin', 'branchManager'].includes(parsed?.role)) {
           setUser(parsed);
           // Sync latest profile
           api.get('/profile').then(res => {
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData) => {
-    if (!['superAdmin', 'admin'].includes(userData?.role)) return;
+    if (!['superAdmin', 'admin', 'branchManager'].includes(userData?.role)) return;
     setUser(userData);
     localStorage.setItem('branch-user', JSON.stringify(userData));
     localStorage.setItem('branch-token', userData.token);

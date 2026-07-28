@@ -7,21 +7,23 @@ import { GitBranch, Plus, Edit2, Trash2, X, Check, Eye, ToggleLeft, ToggleRight 
 export default function BranchManagement() {
   const { themeColors } = useTheme();
   const [branches, setBranches]       = useState([]);
-  const [admins, setAdmins]           = useState([]);
   const [users, setUsers]             = useState([]);
   const [assignedIds, setAssignedIds] = useState([]);
   const [loading, setLoading]         = useState(true);
   const [modal, setModal]             = useState(null);
   const [selected, setSelected]       = useState(null);
   const [saving, setSaving]           = useState(false);
-  const [form, setForm]               = useState({ name: '', description: '', branchAdmin: '', assignedUsers: [] });
+  const [form, setForm]               = useState({
+    name: '', description: '',
+    managerName: '', managerEmail: '', managerPassword: '', managerPhone: '',
+    assignedUsers: [],
+  });
 
   const fetchAll = async () => {
     setLoading(true);
     try {
       const [bRes, uRes] = await Promise.all([api.get('/branches'), api.get('/branches/available-users')]);
       setBranches(bRes.data?.data?.branches || []);
-      setAdmins(uRes.data?.data?.admins || []);
       setUsers(uRes.data?.data?.users || []);
       setAssignedIds(uRes.data?.data?.assignedUserIds || []);
     } catch { toast.error('Failed to load data'); }
@@ -31,15 +33,22 @@ export default function BranchManagement() {
   useEffect(() => { fetchAll(); }, []);
 
   const openCreate = () => {
-    setForm({ name: '', description: '', branchAdmin: '', assignedUsers: [] });
+    setForm({ name: '', description: '', managerName: '', managerEmail: '', managerPassword: '', managerPhone: '', assignedUsers: [] });
     setSelected(null); setModal('create');
   };
   const openEdit = (b) => {
     setSelected(b);
-    setForm({ name: b.name, description: b.description || '', branchAdmin: b.branchAdmin?._id || '', assignedUsers: b.assignedUsers?.map(u => u._id) || [] });
+    setForm({
+      name: b.name, description: b.description || '',
+      managerName: b.branchManager?.name || '',
+      managerEmail: b.branchManager?.email || '',
+      managerPhone: b.branchManager?.phone || '',
+      managerPassword: '',
+      assignedUsers: b.assignedUsers?.map(u => u._id) || [],
+    });
     setModal('edit');
   };
-  const openView  = (b) => { setSelected(b); setModal('view'); };
+  const openView   = (b) => { setSelected(b); setModal('view'); };
   const closeModal = () => { setModal(null); setSelected(null); };
 
   const toggleUser = (id) => setForm(p => ({
@@ -49,6 +58,8 @@ export default function BranchManagement() {
 
   const handleSave = async () => {
     if (!form.name.trim()) return toast.error('Branch name is required');
+    if (modal === 'create' && (!form.managerName.trim() || !form.managerEmail.trim() || !form.managerPassword.trim()))
+      return toast.error('Manager name, email and password are required');
     setSaving(true);
     try {
       if (modal === 'create') { await api.post('/branches', form); toast.success('Branch created!'); }
@@ -107,7 +118,7 @@ export default function BranchManagement() {
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr style={{ backgroundColor: `${themeColors.primary}08`, borderBottom: `1px solid ${themeColors.border}` }}>
-                  {['Branch', 'Admin', 'Staff', 'Status', 'Actions'].map(h => (
+                  {['Branch', 'Manager', 'Staff', 'Status', 'Actions'].map(h => (
                     <th key={h} className="py-4 px-6 font-semibold text-sm" style={{ color: themeColors.textSecondary }}>{h}</th>
                   ))}
                 </tr>
@@ -122,7 +133,10 @@ export default function BranchManagement() {
                       <p className="font-bold text-sm" style={{ color: themeColors.text }}>{b.name}</p>
                       {b.description && <p className="text-xs mt-0.5 truncate max-w-[180px]" style={{ color: themeColors.textSecondary }}>{b.description}</p>}
                     </td>
-                    <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{b.branchAdmin?.name || <span className="italic">Unassigned</span>}</td>
+                    <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>
+                      {b.branchManager?.name || <span className="italic">Unassigned</span>}
+                      {b.branchManager?.email && <p className="text-xs" style={{ color: themeColors.textSecondary }}>{b.branchManager.email}</p>}
+                    </td>
                     <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{b.assignedUsers?.length || 0}</td>
                     <td className="py-4 px-6">
                       <button onClick={() => handleToggle(b)} className="flex items-center gap-1.5">
@@ -160,23 +174,46 @@ export default function BranchManagement() {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-4">
+              {/* Branch Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Branch Name *</label>
                   <input {...inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. Delhi Branch" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Branch Admin</label>
-                  <select {...inp} value={form.branchAdmin} onChange={e => setForm(p => ({ ...p, branchAdmin: e.target.value }))}>
-                    <option value="">— Select Admin —</option>
-                    {admins.map(a => <option key={a._id} value={a._id}>{a.name} ({a.email})</option>)}
-                  </select>
+                  <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Description</label>
+                  <input {...inp} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Optional description" />
                 </div>
               </div>
+
+              {/* Branch Manager */}
               <div>
-                <label className="block text-sm font-semibold mb-1" style={{ color: themeColors.text }}>Description</label>
-                <textarea {...inp} rows={2} className={inp.className + ' resize-none'} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="Optional description..." />
+                <label className="block text-sm font-semibold mb-2" style={{ color: themeColors.text }}>
+                  Branch Manager {modal === 'create' ? '*' : '(leave blank to keep unchanged)'}
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: themeColors.textSecondary }}>Name {modal === 'create' && '*'}</label>
+                    <input {...inp} value={form.managerName} onChange={e => setForm(p => ({ ...p, managerName: e.target.value }))} placeholder="Manager Name" />
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: themeColors.textSecondary }}>Email {modal === 'create' && '*'}</label>
+                    <input {...inp} type="email" value={form.managerEmail} onChange={e => setForm(p => ({ ...p, managerEmail: e.target.value }))} placeholder="manager@example.com" />
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: themeColors.textSecondary }}>Phone</label>
+                    <input {...inp} value={form.managerPhone} onChange={e => setForm(p => ({ ...p, managerPhone: e.target.value }))} placeholder="Phone (optional)" />
+                  </div>
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: themeColors.textSecondary }}>
+                      {modal === 'edit' ? 'New Password (optional)' : 'Password *'}
+                    </label>
+                    <input {...inp} type="password" value={form.managerPassword} onChange={e => setForm(p => ({ ...p, managerPassword: e.target.value }))} placeholder="••••••••" />
+                  </div>
+                </div>
               </div>
+
+              {/* Assign Staff */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-semibold" style={{ color: themeColors.text }}>Assign Staff ({form.assignedUsers.length} selected)</label>
@@ -236,8 +273,9 @@ export default function BranchManagement() {
                   <p className="text-sm font-bold" style={{ color: selected.active ? themeColors.success : themeColors.danger }}>{selected.active ? 'Active' : 'Inactive'}</p>
                 </div>
                 <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Branch Admin</p>
-                  <p className="text-sm font-bold" style={{ color: themeColors.text }}>{selected.branchAdmin?.name || 'Unassigned'}</p>
+                  <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Branch Manager</p>
+                  <p className="text-sm font-bold" style={{ color: themeColors.text }}>{selected.branchManager?.name || 'Unassigned'}</p>
+                  {selected.branchManager?.email && <p className="text-xs mt-0.5" style={{ color: themeColors.textSecondary }}>{selected.branchManager.email}</p>}
                 </div>
                 {selected.description && (
                   <div className="p-3 rounded-lg border col-span-2" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
