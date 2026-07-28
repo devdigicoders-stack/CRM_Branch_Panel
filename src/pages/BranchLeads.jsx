@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const STATUS_COLORS = {
   new:            { bg: '#3182ce15', text: '#3182ce' },
@@ -13,13 +13,16 @@ const STATUS_COLORS = {
   lost:           { bg: '#71717a15', text: '#71717a' },
 };
 
+const PAGE_SIZE = 10;
+
 export default function BranchLeads() {
   const { themeColors } = useTheme();
-  const [leads, setLeads]             = useState([]);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState(null);
-  const [search, setSearch]           = useState('');
+  const [leads, setLeads]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState(null);
+  const [search, setSearch]             = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage]                 = useState(1);
 
   useEffect(() => {
     api.get('/branches')
@@ -33,13 +36,18 @@ export default function BranchLeads() {
       .finally(() => setLoading(false));
   }, []);
 
+  // reset to page 1 on filter/search change
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
+
   const filtered = leads.filter(l => {
     const matchSearch = !search || l.name?.toLowerCase().includes(search.toLowerCase()) || l.phone?.includes(search);
     const matchStatus = !statusFilter || l.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  const statuses = [...new Set(leads.map(l => l.status))];
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated  = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const statuses   = [...new Set(leads.map(l => l.status))];
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[70vh]">
@@ -58,10 +66,15 @@ export default function BranchLeads() {
 
   return (
     <div className="p-6 animate-fade-in space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight" style={{ color: themeColors.text }}>Branch Leads</h1>
-          <p className="text-sm mt-1" style={{ color: themeColors.textSecondary }}>{leads.length} total leads in your branch</p>
+          <p className="text-sm mt-1" style={{ color: themeColors.textSecondary }}>
+            {filtered.length === leads.length
+              ? `${leads.length} total lead${leads.length !== 1 ? 's' : ''} in your branch`
+              : `Showing ${filtered.length} of ${leads.length} lead${leads.length !== 1 ? 's' : ''}`}
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
@@ -87,24 +100,27 @@ export default function BranchLeads() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr style={{ backgroundColor: `${themeColors.primary}08`, borderBottom: `1px solid ${themeColors.border}` }}>
-                {['Lead', 'Phone', 'Assigned To', 'Status', 'Priority'].map(h => (
+                {['#', 'Lead', 'Phone', 'Assigned To', 'Status', 'Priority'].map(h => (
                   <th key={h} className="py-4 px-6 font-semibold text-sm" style={{ color: themeColors.textSecondary }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={5} className="py-8 text-center font-medium text-sm" style={{ color: themeColors.textSecondary }}>No leads found.</td></tr>
-              ) : filtered.map((l, i) => {
-                const sc = STATUS_COLORS[l.status] || { bg: '#71717a15', text: '#71717a' };
+              {paginated.length === 0 ? (
+                <tr><td colSpan={6} className="py-8 text-center font-medium text-sm" style={{ color: themeColors.textSecondary }}>No leads found.</td></tr>
+              ) : paginated.map((l, i) => {
+                const sc  = STATUS_COLORS[l.status] || { bg: '#71717a15', text: '#71717a' };
+                const row = (page - 1) * PAGE_SIZE + i + 1;
                 return (
                   <tr key={l._id} className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                    style={{ borderBottom: i !== filtered.length - 1 ? `1px solid ${themeColors.border}` : 'none' }}>
+                    style={{ borderBottom: i !== paginated.length - 1 ? `1px solid ${themeColors.border}` : 'none' }}>
+                    <td className="py-4 px-6 text-sm font-medium" style={{ color: themeColors.textSecondary }}>{row}</td>
                     <td className="py-4 px-6">
                       <p className="font-bold text-sm" style={{ color: themeColors.text }}>{l.name || '—'}</p>
                       {l.email && <p className="text-xs mt-0.5 truncate max-w-[160px]" style={{ color: themeColors.textSecondary }}>{l.email}</p>}
@@ -132,6 +148,60 @@ export default function BranchLeads() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t" style={{ borderColor: themeColors.border }}>
+            <p className="text-sm" style={{ color: themeColors.textSecondary }}>
+              Page {page} of {totalPages} &nbsp;·&nbsp; {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-1.5 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ borderColor: themeColors.border, color: themeColors.textSecondary }}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                .reduce((acc, n, idx, arr) => {
+                  if (idx > 0 && n - arr[idx - 1] > 1) acc.push('…');
+                  acc.push(n);
+                  return acc;
+                }, [])
+                .map((n, idx) =>
+                  n === '…' ? (
+                    <span key={`ellipsis-${idx}`} className="px-2 text-sm" style={{ color: themeColors.textSecondary }}>…</span>
+                  ) : (
+                    <button
+                      key={n}
+                      onClick={() => setPage(n)}
+                      className="w-8 h-8 rounded-lg border text-sm font-medium transition-colors"
+                      style={{
+                        borderColor: page === n ? themeColors.primary : themeColors.border,
+                        backgroundColor: page === n ? themeColors.primary : 'transparent',
+                        color: page === n ? '#fff' : themeColors.textSecondary,
+                      }}
+                    >
+                      {n}
+                    </button>
+                  )
+                )}
+
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-1.5 rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ borderColor: themeColors.border, color: themeColors.textSecondary }}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
