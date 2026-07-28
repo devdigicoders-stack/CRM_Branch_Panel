@@ -1,97 +1,119 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
-import api from '../api/axios';
-import { Building2, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import { useFont } from "../context/FontContext";
+import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function Login() {
+const Login = () => {
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [error, setError]             = useState("");
+  const [isLoading, setIsLoading]     = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const { login } = useAuth();
-  const navigate   = useNavigate();
-  const [form, setForm]       = useState({ email: '', password: '' });
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { themeColors } = useTheme();
+  const { currentFont } = useFont();
+  const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setCredentials(p => ({ ...p, [e.target.name]: e.target.value }));
+    setError("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
+    setError("");
     try {
-      const res  = await api.post('/auth/login', form);
-      const data = res.data?.data?.user || res.data?.data?.admin;
-      if (!['superAdmin', 'admin'].includes(data?.role)) {
-        toast.error('Access denied. Only SuperAdmin or Branch Admin can login here.');
+      const res  = await api.post("/auth/login", credentials);
+      const { token, data } = res.data;
+      const user = data.user || data.admin;
+
+      if (!["superAdmin", "admin"].includes(user?.role)) {
+        setError("Access denied. This panel is for Branch Admins only.");
         return;
       }
-      login({ ...data, token: res.data.token });
-      toast.success(`Welcome, ${data.name}!`);
-      navigate('/dashboard');
+      login({ ...user, token });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || "Something went wrong. Please check your credentials.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: themeColors.background, fontFamily: currentFont?.family }}
+    >
+      <div
+        className="w-full max-w-sm p-8 rounded-2xl shadow-xl border transition-all"
+        style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+      >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-500/30">
-            <Building2 size={32} className="text-white" />
+          <h1 className="text-3xl font-extrabold mb-2" style={{ color: themeColors.primary }}>CRM</h1>
+          <p className="text-sm font-medium" style={{ color: themeColors.textSecondary }}>Branch Admin Portal</p>
+        </div>
+
+        {error && (
+          <div
+            className="mb-6 p-3 rounded-lg text-center text-sm font-medium"
+            style={{ backgroundColor: themeColors.danger + "15", color: themeColors.danger, border: `1px solid ${themeColors.danger}30` }}
+          >
+            {error}
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Branch Panel</h1>
-          <p className="text-slate-400 text-sm mt-1">CRM Branch Management System</p>
-        </div>
+        )}
 
-        {/* Card */}
-        <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-lg font-bold text-white mb-6">Sign in to your account</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Email</label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
-                  placeholder="admin@example.com"
-                />
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block mb-2 text-sm font-semibold" style={{ color: themeColors.text }}>Email Address</label>
+            <input
+              type="email" name="email" value={credentials.email} onChange={handleChange}
+              required disabled={isLoading} placeholder="admin@example.com"
+              className="w-full p-3.5 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all shadow-sm"
+              style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm font-semibold" style={{ color: themeColors.text }}>Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"} name="password" value={credentials.password}
+                onChange={handleChange} required disabled={isLoading} placeholder="••••••••"
+                className="w-full p-3.5 pr-10 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all shadow-sm"
+                style={{ backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }}
+              />
+              <button type="button" onClick={() => setShowPassword(p => !p)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
+                style={{ color: themeColors.textSecondary }}>
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type={showPwd ? 'text' : 'password'}
-                  required
-                  value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-10 py-3 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
-                  placeholder="••••••••"
-                />
-                <button type="button" onClick={() => setShowPwd(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition">
-                  {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20 mt-2"
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-        </div>
+          <button
+            type="submit" disabled={isLoading}
+            className="w-full py-3.5 px-4 rounded-xl font-bold text-sm transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed hover:shadow-lg hover:-translate-y-0.5 mt-4"
+            style={{ backgroundColor: themeColors.primary, color: themeColors.onPrimary }}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Authenticating...
+              </span>
+            ) : "Sign In"}
+          </button>
+        </form>
       </div>
     </div>
   );
-}
+};
+
+export default Login;

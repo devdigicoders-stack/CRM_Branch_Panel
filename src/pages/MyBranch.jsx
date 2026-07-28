@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
-import { Building2, Users, User, Mail, Phone, CheckCircle2, XCircle } from 'lucide-react';
+import { Building2, Users, Mail, Phone } from 'lucide-react';
 
 export default function MyBranch() {
+  const { themeColors } = useTheme();
   const [branch, setBranch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(null);
@@ -18,80 +20,106 @@ export default function MyBranch() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-slate-400 text-sm">Loading...</div>;
-  if (error)   return <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-red-400 text-sm">{error}</div>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2" style={{ borderColor: themeColors.primary }} />
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex items-center justify-center min-h-[70vh]">
+      <div className="px-6 py-4 rounded-xl border font-medium text-sm"
+        style={{ backgroundColor: themeColors.danger + '15', color: themeColors.danger, borderColor: themeColors.danger + '30' }}>
+        {error}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 animate-fade-in space-y-6">
       <div>
-        <h1 className="text-xl font-black text-white">My Branch</h1>
-        <p className="text-slate-400 text-sm mt-0.5">Branch details and assigned staff</p>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: themeColors.text }}>My Branch</h1>
+        <p className="text-sm mt-1" style={{ color: themeColors.textSecondary }}>Branch details and assigned staff</p>
       </div>
 
-      {/* Branch Info */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-600/20 rounded-2xl flex items-center justify-center">
-            <Building2 size={22} className="text-blue-400" />
+      {/* Branch Info Card */}
+      <div className="rounded-xl p-6 shadow-sm border" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center"
+            style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary }}>
+            <Building2 size={26} />
           </div>
-          <div>
-            <h2 className="text-white font-black text-lg">{branch.name}</h2>
-            {branch.description && <p className="text-slate-400 text-sm">{branch.description}</p>}
+          <div className="flex-1">
+            <h2 className="text-xl font-bold" style={{ color: themeColors.text }}>{branch.name}</h2>
+            {branch.description && <p className="text-sm mt-0.5" style={{ color: themeColors.textSecondary }}>{branch.description}</p>}
           </div>
-          <span className={`ml-auto text-xs font-bold px-3 py-1 rounded-lg ${branch.active ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${branch.active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
             {branch.active ? 'Active' : 'Inactive'}
           </span>
         </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
-          <div className="bg-slate-800 rounded-xl p-3">
-            <p className="text-slate-400 text-xs mb-1">Branch Admin</p>
-            <p className="text-white text-sm font-bold">{branch.branchAdmin?.name || 'You'}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t" style={{ borderColor: themeColors.border }}>
+          <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
+            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Branch Admin</p>
+            <p className="text-sm font-bold" style={{ color: themeColors.text }}>{branch.branchAdmin?.name || 'You'}</p>
           </div>
-          <div className="bg-slate-800 rounded-xl p-3">
-            <p className="text-slate-400 text-xs mb-1">Admin Email</p>
-            <p className="text-white text-sm font-bold truncate">{branch.branchAdmin?.email || '—'}</p>
+          <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
+            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Admin Email</p>
+            <p className="text-sm font-bold truncate" style={{ color: themeColors.text }}>{branch.branchAdmin?.email || '—'}</p>
           </div>
-          <div className="bg-slate-800 rounded-xl p-3">
-            <p className="text-slate-400 text-xs mb-1">Total Staff</p>
-            <p className="text-white text-sm font-bold">{branch.assignedUsers?.length || 0}</p>
+          <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
+            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Total Staff</p>
+            <p className="text-sm font-bold" style={{ color: themeColors.text }}>{branch.assignedUsers?.length || 0}</p>
           </div>
         </div>
       </div>
 
-      {/* Staff List */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2">
-          <Users size={16} className="text-blue-400" />
-          <h3 className="text-white font-bold text-sm">Assigned Staff</h3>
+      {/* Staff Table */}
+      <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}>
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: themeColors.border }}>
+          <Users size={16} style={{ color: themeColors.primary }} />
+          <h3 className="font-bold text-sm" style={{ color: themeColors.text }}>Assigned Staff</h3>
         </div>
-        <div className="divide-y divide-slate-800">
-          {branch.assignedUsers?.length === 0 ? (
-            <div className="px-5 py-8 text-center text-slate-500 text-sm">No staff assigned yet.</div>
-          ) : branch.assignedUsers?.map(u => (
-            <div key={u._id} className="px-5 py-4 flex items-center gap-4">
-              <div className="w-9 h-9 bg-blue-600/20 rounded-xl flex items-center justify-center text-blue-400 text-sm font-black shrink-0">
-                {u.name?.[0]?.toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-white text-sm font-bold truncate">{u.name}</p>
-                <p className="text-slate-500 text-xs capitalize">{u.role}</p>
-              </div>
-              <div className="hidden sm:flex items-center gap-1 text-slate-400 text-xs">
-                <Mail size={12} />
-                <span className="truncate max-w-[160px]">{u.email}</span>
-              </div>
-              {u.phone && (
-                <div className="hidden md:flex items-center gap-1 text-slate-400 text-xs">
-                  <Phone size={12} />
-                  <span>{u.phone}</span>
-                </div>
-              )}
-              <span className={`shrink-0 text-xs font-bold px-2 py-1 rounded-lg ${u.active ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                {u.active ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[500px]">
+            <thead>
+              <tr style={{ backgroundColor: `${themeColors.primary}08`, borderBottom: `1px solid ${themeColors.border}` }}>
+                {['Member', 'Email', 'Phone', 'Role', 'Status'].map(h => (
+                  <th key={h} className="py-4 px-6 font-semibold text-sm" style={{ color: themeColors.textSecondary }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {branch.assignedUsers?.length === 0 ? (
+                <tr><td colSpan={5} className="py-8 text-center text-sm" style={{ color: themeColors.textSecondary }}>No staff assigned yet.</td></tr>
+              ) : branch.assignedUsers?.map((u, i) => (
+                <tr key={u._id} className="hover:bg-black/5 transition-colors"
+                  style={{ borderBottom: i !== branch.assignedUsers.length - 1 ? `1px solid ${themeColors.border}` : 'none' }}>
+                  <td className="py-4 px-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0"
+                        style={{ backgroundColor: `${themeColors.primary}20`, color: themeColors.primary }}>
+                        {u.name?.[0]?.toUpperCase()}
+                      </div>
+                      <span className="font-bold text-sm" style={{ color: themeColors.text }}>{u.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{u.email || '—'}</td>
+                  <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{u.phone || '—'}</td>
+                  <td className="py-4 px-6">
+                    <span className="px-2.5 py-1 rounded-md text-xs font-medium capitalize"
+                      style={{ backgroundColor: `${themeColors.primary}15`, color: themeColors.primary, border: `1px solid ${themeColors.primary}30` }}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="py-4 px-6">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${u.active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
+                      {u.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
