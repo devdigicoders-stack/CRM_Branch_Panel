@@ -21,8 +21,9 @@ function AppRoutes() {
 
   const allowedRoutes = routes.filter(r => {
     if (r.hide) return false;
-    if (user?.role === 'superAdmin') return !r.adminOnly;
+    if (user?.role === 'superAdmin') return !r.managerOnly;
     if (r.superAdminOnly) return false;
+    if (r.managerOnly && user?.role !== 'branchManager') return false;
     return true;
   });
 

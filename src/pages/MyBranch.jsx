@@ -59,12 +59,12 @@ export default function MyBranch() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t" style={{ borderColor: themeColors.border }}>
           <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
-            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Branch Admin</p>
-            <p className="text-sm font-bold" style={{ color: themeColors.text }}>{branch.branchAdmin?.name || 'You'}</p>
+            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Branch Manager</p>
+            <p className="text-sm font-bold" style={{ color: themeColors.text }}>{branch.branchManager?.name || 'You'}</p>
           </div>
           <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
-            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Admin Email</p>
-            <p className="text-sm font-bold truncate" style={{ color: themeColors.text }}>{branch.branchAdmin?.email || '—'}</p>
+            <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Manager Email</p>
+            <p className="text-sm font-bold truncate" style={{ color: themeColors.text }}>{branch.branchManager?.email || '—'}</p>
           </div>
           <div className="p-3 rounded-lg border" style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}>
             <p className="text-xs font-semibold mb-1" style={{ color: themeColors.textSecondary }}>Total Staff</p>

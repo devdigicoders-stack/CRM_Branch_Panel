@@ -48,7 +48,7 @@ function SuperAdminDashboard({ themeColors }) {
         <StatCard label="Total Branches"   value={branches.length}                              icon={GitBranch}   themeColors={themeColors} />
         <StatCard label="Active Branches"  value={branches.filter(b => b.active).length}        icon={CheckCircle2} themeColors={themeColors} />
         <StatCard label="Total Staff"      value={totalUsers}                                   icon={Users}       themeColors={themeColors} />
-        <StatCard label="With Admin"       value={branches.filter(b => b.branchAdmin).length}   icon={TrendingUp}  themeColors={themeColors} />
+        <StatCard label="With Manager"     value={branches.filter(b => b.branchManager).length}  icon={TrendingUp}  themeColors={themeColors} />
       </div>
 
       {loading ? (
@@ -79,7 +79,7 @@ function SuperAdminDashboard({ themeColors }) {
                       <p className="font-bold text-sm" style={{ color: themeColors.text }}>{b.name}</p>
                       {b.description && <p className="text-xs mt-0.5 truncate max-w-[180px]" style={{ color: themeColors.textSecondary }}>{b.description}</p>}
                     </td>
-                    <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{b.branchAdmin?.name || <span className="italic">Unassigned</span>}</td>
+                    <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{b.branchManager?.name || <span className="italic">Unassigned</span>}</td>
                     <td className="py-4 px-6 text-sm" style={{ color: themeColors.textSecondary }}>{b.assignedUsers?.length || 0}</td>
                     <td className="py-4 px-6">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${b.active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -97,7 +97,7 @@ function SuperAdminDashboard({ themeColors }) {
   );
 }
 
-function BranchAdminDashboard({ themeColors }) {
+function BranchManagerDashboard({ themeColors }) {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState(null);
@@ -192,5 +192,5 @@ export default function Dashboard() {
   const { themeColors } = useTheme();
   return user?.role === 'superAdmin'
     ? <SuperAdminDashboard themeColors={themeColors} />
-    : <BranchAdminDashboard themeColors={themeColors} />;
+    : <BranchManagerDashboard themeColors={themeColors} />;
 }
