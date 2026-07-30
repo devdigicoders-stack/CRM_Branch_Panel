@@ -82,11 +82,9 @@ const Dashboard = () => {
 
   const stats = useMemo(() => {
     if (!data) return [];
-    const unassignedCount = data.totalLeads - data.assignedLeads;
     return [
       { title: "Total Leads", value: data.totalLeads || 0, icon: FaUsers, isPositive: true },
       { title: "Assigned Leads", value: data.assignedLeads || 0, icon: FaChartLine, isPositive: true },
-      { title: "Unassigned Leads", value: unassignedCount > 0 ? unassignedCount : 0, icon: FaUsers, isPositive: false, path: "/leads", state: { filterTag: "unassigned" } },
       { title: "Today's Reminders", value: data.todayReminders || 0, icon: FaBell, isPositive: true },
       { title: "Missed Follow-Ups", value: data.missedFollowUps || 0, icon: FaExclamationTriangle, isPositive: false, path: "/missed-follow-ups" },
     ];
@@ -104,11 +102,14 @@ const Dashboard = () => {
 
   const leadFlowData = useMemo(() => {
     if (!data?.leadFlow) return [];
-    return [
+    const flow = [
       { name: "Calling Team", value: data.leadFlow.callingTeam || 0 },
       { name: "Sales Panel", value: data.leadFlow.salesPanel || 0 },
-      { name: "Unassigned", value: data.leadFlow.unassigned || 0 },
     ];
+    if (data.leadFlow.branchTeam) {
+      flow.push({ name: "Branch / Admin", value: data.leadFlow.branchTeam || 0 });
+    }
+    return flow;
   }, [data]);
 
   // Combine Performance and Call Activity
@@ -185,7 +186,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div 
             key={index}
