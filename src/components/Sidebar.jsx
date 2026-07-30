@@ -66,9 +66,7 @@ SidebarItem.displayName = "SidebarItem";
 const Sidebar = ({ isOpen, onClose, routes, currentPath, user, logout, themeColors }) => {
   const visibleRoutes = routes.filter(r => {
     if (r.hide) return false;
-    if (user?.role === 'superAdmin') return !r.managerOnly;
-    if (r.superAdminOnly) return false;
-    if (r.managerOnly && user?.role !== 'branchManager') return false;
+    if (r.superAdminOnly && user?.role !== 'superAdmin') return false;
     return true;
   });
 

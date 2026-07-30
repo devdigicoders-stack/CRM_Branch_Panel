@@ -1,24 +1,38 @@
 import { lazy } from "react";
-import {
-  LayoutDashboard, GitBranch, Building2, TrendingUp, Users, User, BarChart3
-} from "lucide-react";
+import { 
+  FaTachometerAlt, FaUsers, FaShieldAlt, FaCog, FaBell, 
+  FaBullhorn, FaUser, FaLock, FaUserPlus, FaCalendarAlt, 
+  FaExclamationTriangle, FaChartLine, FaCodeBranch 
+} from "react-icons/fa";
 
-const Dashboard        = lazy(() => import("../pages/Dashboard"));
+const Dashboard      = lazy(() => import("../pages/Dashboard"));
+const CreateAdmin    = lazy(() => import("../pages/CreateAdmin"));
+const CreateUser     = lazy(() => import("../pages/CreateUser"));
+const GlobalSettings = lazy(() => import("../pages/GlobalSettings"));
+const Notifications  = lazy(() => import("../pages/Notifications"));
+const LeadManagement = lazy(() => import("../pages/LeadManagement"));
+const Profile        = lazy(() => import("../pages/Profile"));
+const ChangePassword = lazy(() => import("../pages/ChangePassword"));
+const CalendarView   = lazy(() => import("../pages/CalendarView"));
+const MissedFollowUps = lazy(() => import("../pages/MissedFollowUps"));
+const UserHistory    = lazy(() => import("../pages/UserHistory"));
+const Reports        = lazy(() => import("../pages/Reports"));
 const BranchManagement = lazy(() => import("../pages/BranchManagement"));
-const MyBranch         = lazy(() => import("../pages/MyBranch"));
-const BranchLeads      = lazy(() => import("../pages/BranchLeads"));
-const BranchStaff      = lazy(() => import("../pages/BranchStaff"));
-const BranchReports    = lazy(() => import("../pages/BranchReports"));
-const Profile          = lazy(() => import("../pages/Profile"));
 
 const routes = [
-  { path: "/dashboard", component: Dashboard,        name: "Dashboard",         icon: LayoutDashboard },
-  { path: "/branches",  component: BranchManagement, name: "Branch Management", icon: GitBranch,   superAdminOnly: true },
-  { path: "/my-branch", component: MyBranch,         name: "My Branch",         icon: Building2,   managerOnly: true },
-  { path: "/leads",     component: BranchLeads,      name: "Branch Leads",      icon: TrendingUp,  managerOnly: true },
-  { path: "/staff",     component: BranchStaff,      name: "Staff Management",  icon: Users,       managerOnly: true },
-  { path: "/reports",   component: BranchReports,    name: "Reports",           icon: BarChart3,   managerOnly: true },
-  { path: "/profile",   component: Profile,          name: "My Profile",        icon: User },
+  { path: "/dashboard", component: Dashboard, name: "Dashboard", icon: FaTachometerAlt },
+  { path: "/create-admin", component: CreateAdmin, name: "Create Admin", icon: FaUserPlus, superAdminOnly: true },
+  { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser },
+  { path: "/branch-management", component: BranchManagement, name: "Branch Management", icon: FaCodeBranch, superAdminOnly: true },
+  { path: "/lead-management", component: LeadManagement, name: "Lead Management", icon: FaBullhorn },
+  { path: "/user-history", component: UserHistory, name: "Staff History", icon: FaUsers },
+  { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog },
+  { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt },
+  { path: "/reports", component: Reports, name: "Reports & Analytics", icon: FaChartLine },
+  { path: "/notifications", component: Notifications, name: "Notifications", icon: FaBell },
+  { path: "/profile", component: Profile, name: "My Profile", icon: FaUser },
+  { path: "/change-password", component: ChangePassword, name: "Change Password", icon: FaLock },
+  { path: "/missed-follow-ups", component: MissedFollowUps, name: "Missed Follow-Ups", icon: FaExclamationTriangle, hide: true },
 ];
 
 export default routes;
