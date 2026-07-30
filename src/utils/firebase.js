@@ -12,11 +12,22 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+let messaging = null;
+
+try {
+  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+    const app = initializeApp(firebaseConfig);
+    messaging = getMessaging(app);
+  } else {
+    console.warn("Firebase configuration values (projectId/apiKey) are missing in .env file.");
+  }
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
 
 // authToken = JWT token from login, to save FCM token on backend
 export const initNotifications = async (authToken) => {
+  if (!messaging) return null;
   try {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
@@ -49,6 +60,7 @@ export const initNotifications = async (authToken) => {
 };
 
 export const listenForMessages = () => {
+  if (!messaging) return;
   onMessage(messaging, (payload) => {
     const { title, body } = payload.notification || {};
     toast(title || "New Notification", {
@@ -59,3 +71,4 @@ export const listenForMessages = () => {
     window.dispatchEvent(new Event("new-notification"));
   });
 };
+
