@@ -5,7 +5,8 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { toast } from "sonner";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import HighchartsReactRaw from "highcharts-react-official";
+const HighchartsReact = HighchartsReactRaw?.default || HighchartsReactRaw;
 
 const TIMEFRAMES = [
   { id: "today", label: "Today", icon: FaCalendarDay },
@@ -320,6 +321,7 @@ const Reports = () => {
           <div className="flex gap-2 min-w-max p-1 bg-black/5 dark:bg-white/5 rounded-xl border w-max" style={{ borderColor: themeColors.border }}>
             {availableTimeframes.map((tf) => {
               const isActive = activeTimeframe === tf.id;
+              const IconComp = tf.icon;
               return (
                 <button
                   key={tf.id}
@@ -331,7 +333,7 @@ const Reports = () => {
                     boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                   }}
                 >
-                  <tf.icon className={isActive ? "text-primary" : "opacity-70"} />
+                  {IconComp && <IconComp className={isActive ? "text-primary" : "opacity-70"} />}
                   {tf.label}
                 </button>
               );
