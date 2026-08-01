@@ -28,10 +28,8 @@ const DashboardLayout = () => {
     navigate("/login", { replace: true });
   }, [logout, navigate]);
 
-  // Filter routes based on role
   const visibleRoutes = routes.filter(r => {
     if (r.hide) return false;
-    if (user?.role === 'superAdmin') return !r.adminOnly;
     if (r.superAdminOnly) return false;
     return true;
   });

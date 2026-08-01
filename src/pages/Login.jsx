@@ -44,9 +44,9 @@ const Login = () => {
         const { token, data } = response.data;
         const user = data.user;
 
-        const allowedRoles = ["superAdmin", "admin"];
+        const allowedRoles = ["branchManager", "admin"];
         if (!allowedRoles.includes(user?.role)) {
-          setError("Access denied. This panel is for Admins only.");
+          setError("Access denied. This panel is for Branch Admins only.");
           return;
         }
 
@@ -98,7 +98,7 @@ const Login = () => {
             className="text-sm font-medium"
             style={{ color: themeColors.textSecondary }}
           >
-            SuperAdmin Portal
+            Branch Admin Portal
           </p>
         </div>
 
@@ -140,7 +140,7 @@ const Login = () => {
                 color: themeColors.text,
                 borderColor: themeColors.border,
               }}
-              placeholder="adminsuper@crm.com"
+              placeholder="branchadmin@crm.com"
               disabled={isLoading}
             />
           </div>

@@ -134,7 +134,6 @@ const Sidebar = ({
   // 🔥 Filter routes based on hide property and user permissions
   const visibleRoutes = routes.filter((r) => {
     if (r.hide) return false;
-    if (user?.role === 'superAdmin') return true;
     if (r.superAdminOnly) return false;
     if (!r.permission) return true;
     return user?.permissions?.includes(r.permission);

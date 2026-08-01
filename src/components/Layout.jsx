@@ -25,7 +25,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  const nav = user?.role === 'superAdmin' ? superAdminNav : branchAdminNav;
+  const nav = branchAdminNav;
 
   const initials = (name = '') => {
     const p = name.trim().split(' ');

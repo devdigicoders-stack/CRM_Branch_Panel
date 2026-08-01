@@ -20,7 +20,7 @@ function AppRoutes() {
   if (loading) return <LoadingSpinner />;
 
   const allowedRoutes = routes.filter(r => {
-    if (r.superAdminOnly && user?.role !== 'superAdmin') return false;
+    if (r.superAdminOnly) return false;
     return true;
   });
 
