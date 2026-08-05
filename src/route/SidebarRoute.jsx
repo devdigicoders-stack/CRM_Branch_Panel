@@ -18,17 +18,17 @@ const MissedFollowUps = lazy(() => import("../pages/MissedFollowUps"));
 const UserHistory    = lazy(() => import("../pages/UserHistory"));
 const Reports        = lazy(() => import("../pages/Reports"));
 const BranchManagement = lazy(() => import("../pages/BranchManagement"));
+const EmployeeReports = lazy(() => import("../pages/EmployeeReports"));
 
 const routes = [
   { path: "/dashboard", component: Dashboard, name: "Dashboard", icon: FaTachometerAlt },
   { path: "/create-admin", component: CreateAdmin, name: "Create Admin", icon: FaUserPlus, superAdminOnly: true },
-  { path: "/create-staff", component: CreateUser, name: "Create Staff", icon: FaUser },
   { path: "/branch-management", component: BranchManagement, name: "Branch Management", icon: FaCodeBranch, superAdminOnly: true },
   { path: "/lead-management", component: LeadManagement, name: "Lead Management", icon: FaBullhorn },
   { path: "/user-history", component: UserHistory, name: "Staff History", icon: FaUsers },
-  { path: "/global-settings", component: GlobalSettings, name: "Global Settings", icon: FaCog },
   { path: "/calendar", component: CalendarView, name: "Calendar", icon: FaCalendarAlt },
   { path: "/reports", component: Reports, name: "Reports & Analytics", icon: FaChartLine },
+  { path: "/employee-reports", component: EmployeeReports, name: "Employee Reports", icon: FaUsers },
   { path: "/notifications", component: Notifications, name: "Notifications", icon: FaBell },
   { path: "/profile", component: Profile, name: "My Profile", icon: FaUser },
   { path: "/change-password", component: ChangePassword, name: "Change Password", icon: FaLock },
