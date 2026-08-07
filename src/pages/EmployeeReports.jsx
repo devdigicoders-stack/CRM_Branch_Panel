@@ -5,7 +5,9 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { toast } from "sonner";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import HighchartsReactRaw from "highcharts-react-official";
+const HighchartsReact = HighchartsReactRaw?.default || HighchartsReactRaw;
+
 
 const TIMEFRAMES = [
   { id: "today", label: "Today", icon: FaCalendarDay },
