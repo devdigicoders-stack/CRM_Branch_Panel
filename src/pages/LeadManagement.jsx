@@ -1,11 +1,11 @@
-import { memo, useState, useEffect } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
   FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, 
   FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
-  FaUpload, FaDownload, FaFileCsv
+  FaUpload, FaDownload, FaFileCsv, FaChevronDown, FaCheck
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -29,8 +29,21 @@ const LeadManagement = () => {
   const limit = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterTag, setFilterTag] = useState(location.state?.filterTag || "");
+  const [filterTags, setFilterTags] = useState(location.state?.filterTag ? [location.state.filterTag] : []);
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState("");
+  const tagDropdownRef = useRef(null);
   const [filterDate, setFilterDate] = useState("");
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target)) {
+        setTagDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Modals & States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -98,7 +111,7 @@ const LeadManagement = () => {
       fetchLeads();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filterTag, filterDate, currentPage, token]);
+  }, [searchTerm, filterTags, filterDate, currentPage, token]);
 
   useEffect(() => {
     const phone = newLead.phone?.trim();
@@ -150,14 +163,13 @@ const LeadManagement = () => {
       
       if (searchTerm) params.search = searchTerm;
       if (filterDate) params.createdAt = filterDate;
-      if (filterTag) {
-        const knownStatuses = ['new', 'assigned', 'interested', 'in_process', 'not_interested', 'converted', 'closed', 'call_done'];
-        if (filterTag.toLowerCase() === 'unassigned') {
+      if (filterTags.length > 0) {
+        if (filterTags.includes('unassigned')) {
           params.assignedTo = 'unassigned';
-        } else if (knownStatuses.includes(filterTag.toLowerCase())) {
-          params.status = filterTag.toLowerCase();
-        } else {
-          params.tag = filterTag;
+        }
+        const customTags = filterTags.filter(t => t !== 'unassigned');
+        if (customTags.length > 0) {
+          params.tag = customTags.join(',');
         }
       }
 
@@ -418,23 +430,151 @@ const LeadManagement = () => {
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             />
           </div>
-          <div className="relative w-48">
-            <FaFilter className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: themeColors.textSecondary }} />
-            <select
-              value={filterTag}
-              onChange={(e) => {
-                setFilterTag(e.target.value);
-                setCurrentPage(1);
+          <div className="relative w-48" ref={tagDropdownRef}>
+            <button
+              type="button"
+              onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
+              className="w-full pl-9 pr-3 py-2.5 rounded-lg border text-sm font-semibold transition-all flex items-center justify-between cursor-pointer"
+              style={{
+                backgroundColor: filterTags.length > 0 ? `${themeColors.primary}12` : themeColors.background,
+                borderColor: filterTags.length > 0 ? themeColors.primary : themeColors.border,
+                color: filterTags.length > 0 ? themeColors.primary : themeColors.text,
               }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm appearance-none cursor-pointer"
-              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             >
-              <option value="">All Leads</option>
-              <option value="unassigned" style={{ color: themeColors.primary, fontWeight: 'bold' }}>Unassigned Leads</option>
-              {settings?.leadTags?.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
+              <div className="flex items-center gap-1.5 truncate">
+                <FaFilter className="shrink-0" style={{ color: filterTags.length > 0 ? themeColors.primary : themeColors.textSecondary }} />
+                <span className="truncate">
+                  {filterTags.length === 0
+                    ? "All Leads"
+                    : filterTags.length === 1
+                    ? (filterTags[0] === 'unassigned' ? 'Unassigned' : filterTags[0])
+                    : `${filterTags.length} Tags`}
+                </span>
+              </div>
+              <FaChevronDown className={`text-xs transition-transform duration-200 shrink-0 ${tagDropdownOpen ? "rotate-180" : ""}`} style={{ color: themeColors.textSecondary }} />
+            </button>
+
+            {tagDropdownOpen && (
+              <div
+                className="absolute left-0 top-full mt-2 w-64 max-h-80 rounded-2xl border shadow-2xl z-50 flex flex-col overflow-hidden"
+                style={{ backgroundColor: themeColors.surface || '#fff', borderColor: themeColors.border }}
+              >
+                <div className="p-2.5 border-b flex flex-col gap-2" style={{ borderColor: themeColors.border }}>
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: themeColors.textSecondary }}>
+                      Filter by Tags ({filterTags.length})
+                    </span>
+                    {filterTags.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => { setFilterTags([]); setCurrentPage(1); }}
+                        className="text-[10px] font-bold text-red-500 hover:underline cursor-pointer"
+                      >
+                        Reset All
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search tags..."
+                      value={tagSearch}
+                      onChange={e => setTagSearch(e.target.value)}
+                      className="w-full pl-7 pr-6 py-1.5 text-xs rounded-lg border outline-none font-medium"
+                      style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
+                    />
+                    <FaSearch className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs" style={{ color: themeColors.textSecondary }} />
+                    {tagSearch && (
+                      <button type="button" onClick={() => setTagSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer">
+                        <FaTimes className="text-xs" style={{ color: themeColors.textSecondary }} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="overflow-y-auto p-1.5 space-y-0.5 flex-1 max-h-52">
+                  <button
+                    type="button"
+                    onClick={() => { setFilterTags([]); setCurrentPage(1); }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer hover:opacity-80"
+                    style={{
+                      backgroundColor: filterTags.length === 0 ? `${themeColors.primary}15` : "transparent",
+                      color: filterTags.length === 0 ? themeColors.primary : themeColors.text,
+                    }}
+                  >
+                    <span>All Leads</span>
+                    {filterTags.length === 0 && <FaCheck className="text-xs" style={{ color: themeColors.primary }} />}
+                  </button>
+
+                  {/* Special unassigned lead tag */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterTags(prev => {
+                        const isSelected = prev.includes('unassigned');
+                        return isSelected ? prev.filter(t => t !== 'unassigned') : [...prev, 'unassigned'];
+                      });
+                      setCurrentPage(1);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer hover:opacity-80"
+                    style={{
+                      backgroundColor: filterTags.includes('unassigned') ? `${themeColors.primary}15` : "transparent",
+                      color: filterTags.includes('unassigned') ? themeColors.primary : themeColors.text,
+                    }}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <div
+                        className="w-3.5 h-3.5 rounded border flex items-center justify-center transition-all shrink-0"
+                        style={{
+                          borderColor: filterTags.includes('unassigned') ? themeColors.primary : themeColors.border,
+                          backgroundColor: filterTags.includes('unassigned') ? themeColors.primary : "transparent",
+                        }}
+                      >
+                        {filterTags.includes('unassigned') && <FaCheck className="text-[9px] text-white" />}
+                      </div>
+                      <span className="truncate font-bold">Unassigned Leads</span>
+                    </div>
+                  </button>
+
+                  {(settings?.leadTags || [])
+                    .filter(t => t.toLowerCase().includes(tagSearch.toLowerCase()))
+                    .map(tag => {
+                      const isSelected = filterTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => {
+                            setFilterTags(prev => {
+                              const next = isSelected ? prev.filter(item => item !== tag) : [...prev, tag];
+                              return next;
+                            });
+                            setCurrentPage(1);
+                          }}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors text-left cursor-pointer hover:opacity-80"
+                          style={{
+                            backgroundColor: isSelected ? `${themeColors.primary}15` : "transparent",
+                            color: isSelected ? themeColors.primary : themeColors.text,
+                          }}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <div
+                              className="w-3.5 h-3.5 rounded border flex items-center justify-center transition-all shrink-0"
+                              style={{
+                                borderColor: isSelected ? themeColors.primary : themeColors.border,
+                                backgroundColor: isSelected ? themeColors.primary : "transparent",
+                              }}
+                            >
+                              {isSelected && <FaCheck className="text-[9px] text-white" />}
+                            </div>
+                            <span className="truncate">{tag}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
           <div className="relative w-48">
             <input
