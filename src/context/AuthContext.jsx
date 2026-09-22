@@ -24,8 +24,18 @@ export const AuthProvider = ({ children }) => {
               const updated = { ...parsed, ...latest, token: savedToken };
               setUser(updated);
               localStorage.setItem('branch-user', JSON.stringify(updated));
+            } else {
+              setUser(null);
+              setToken(null);
+              localStorage.removeItem('branch-user');
+              localStorage.removeItem('branch-token');
             }
-          }).catch(() => {});
+          }).catch(() => {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('branch-user');
+            localStorage.removeItem('branch-token');
+          });
         }
       } catch (_) {}
     }
