@@ -1,11 +1,12 @@
 import { memo, useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
+import SearchableSelect from "../components/SearchableSelect";
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
   FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, 
   FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
-  FaUpload, FaDownload, FaFileCsv, FaChevronDown, FaCheck
+  FaUpload, FaDownload, FaFileCsv, FaChevronDown, FaCheck, FaUser
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -29,6 +30,7 @@ const LeadManagement = () => {
   const limit = 10;
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStaffMember, setFilterStaffMember] = useState("");
   const [filterTags, setFilterTags] = useState(location.state?.filterTag ? [location.state.filterTag] : []);
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
@@ -111,7 +113,7 @@ const LeadManagement = () => {
       fetchLeads();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filterTags, filterDate, currentPage, token]);
+  }, [searchTerm, filterStaffMember, filterTags, filterDate, currentPage, token]);
 
   useEffect(() => {
     const phone = newLead.phone?.trim();
@@ -163,8 +165,11 @@ const LeadManagement = () => {
       
       if (searchTerm) params.search = searchTerm;
       if (filterDate) params.createdAt = filterDate;
+      if (filterStaffMember) {
+        params.assignedTo = filterStaffMember;
+      }
       if (filterTags.length > 0) {
-        if (filterTags.includes('unassigned')) {
+        if (!filterStaffMember && filterTags.includes('unassigned')) {
           params.assignedTo = 'unassigned';
         }
         const customTags = filterTags.filter(t => t !== 'unassigned');
@@ -415,8 +420,8 @@ const LeadManagement = () => {
         className="mb-6 p-4 rounded-xl border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm"
         style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
       >
-        <div className="flex w-full md:w-auto gap-4 flex-1 max-w-2xl">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap w-full md:w-auto gap-4 flex-1">
+          <div className="relative flex-1 min-w-[200px]">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: themeColors.textSecondary }} />
             <input 
               type="text" 
@@ -430,7 +435,27 @@ const LeadManagement = () => {
               style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
             />
           </div>
-          <div className="relative w-48" ref={tagDropdownRef}>
+          <SearchableSelect
+            options={[
+              { value: "", label: "All Staff Members" },
+              { value: "unassigned", label: "Unassigned Leads" },
+              ...staffList.map((staff) => ({
+                value: staff._id,
+                label: `${staff.name} (${(staff.role || 'staff').toUpperCase()})`,
+              })),
+            ]}
+            value={filterStaffMember}
+            onChange={(val) => {
+              setFilterStaffMember(val);
+              setCurrentPage(1);
+            }}
+            placeholder="Search staff member..."
+            defaultLabel="All Staff Members"
+            icon={FaUser}
+            themeColors={themeColors}
+            className="w-full md:w-56"
+          />
+          <div className="relative w-full md:w-48" ref={tagDropdownRef}>
             <button
               type="button"
               onClick={() => setTagDropdownOpen(!tagDropdownOpen)}
