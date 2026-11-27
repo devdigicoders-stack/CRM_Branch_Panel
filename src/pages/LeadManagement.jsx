@@ -4,7 +4,7 @@ import WhatsAppChooserModal from '../components/WhatsAppChooserModal';
 import SearchableSelect from "../components/SearchableSelect";
 import { 
   FaPlus, FaSearch, FaFilter, FaEye, FaEdit, FaTrash, 
-  FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, 
+  FaBullhorn, FaUserPlus, FaTimes, FaCalendarPlus, FaCalendarAlt,
   FaWhatsapp, FaPhoneAlt, FaChevronLeft, FaChevronRight,
   FaUpload, FaDownload, FaFileCsv, FaChevronDown, FaCheck, FaUser
 } from "react-icons/fa";
@@ -35,7 +35,52 @@ const LeadManagement = () => {
   const [tagDropdownOpen, setTagDropdownOpen] = useState(false);
   const [tagSearch, setTagSearch] = useState("");
   const tagDropdownRef = useRef(null);
-  const [filterDate, setFilterDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [datePreset, setDatePreset] = useState("");
+
+  const handleDatePreset = (preset) => {
+    setDatePreset(preset);
+    setCurrentPage(1);
+    const now = new Date();
+    const format = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    if (preset === 'today') {
+      const todayStr = format(now);
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+    } else if (preset === 'yesterday') {
+      const y = new Date();
+      y.setDate(y.getDate() - 1);
+      const yStr = format(y);
+      setStartDate(yStr);
+      setEndDate(yStr);
+    } else if (preset === 'last7days') {
+      const past = new Date();
+      past.setDate(now.getDate() - 6);
+      setStartDate(format(past));
+      setEndDate(format(now));
+    } else if (preset === 'thisMonth') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      setStartDate(format(firstDay));
+      setEndDate(format(lastDay));
+    } else if (preset === 'lastMonth') {
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      setStartDate(format(firstDay));
+      setEndDate(format(lastDay));
+    } else if (preset === 'all') {
+      setStartDate("");
+      setEndDate("");
+      setDatePreset("");
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -113,7 +158,7 @@ const LeadManagement = () => {
       fetchLeads();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filterStaffMember, filterTags, filterDate, currentPage, token]);
+  }, [searchTerm, filterStaffMember, filterTags, startDate, endDate, currentPage, token]);
 
   useEffect(() => {
     const phone = newLead.phone?.trim();
@@ -164,7 +209,8 @@ const LeadManagement = () => {
       };
       
       if (searchTerm) params.search = searchTerm;
-      if (filterDate) params.createdAt = filterDate;
+      if (startDate) params.startDate = startDate;
+      if (endDate) params.endDate = endDate;
       if (filterStaffMember) {
         params.assignedTo = filterStaffMember;
       }
@@ -417,10 +463,10 @@ const LeadManagement = () => {
 
       {/* Filters and Search */}
       <div 
-        className="mb-6 p-4 rounded-xl border flex flex-col md:flex-row gap-4 justify-between items-center shadow-sm"
+        className="mb-6 p-4 rounded-xl border flex flex-col gap-3 shadow-sm"
         style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
       >
-        <div className="flex flex-wrap w-full md:w-auto gap-4 flex-1">
+        <div className="flex flex-wrap w-full gap-3 items-center">
           <div className="relative flex-1 min-w-[200px]">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: themeColors.textSecondary }} />
             <input 
@@ -601,18 +647,95 @@ const LeadManagement = () => {
               </div>
             )}
           </div>
-          <div className="relative w-48">
-            <input
-              type="date"
-              value={filterDate}
-              onChange={(e) => {
-                setFilterDate(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-1 transition-colors text-sm"
-              style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.text }}
-            />
+          {/* Custom Date Range Filter */}
+          <div 
+            className="flex items-center gap-1.5 p-1 rounded-lg border transition-all"
+            style={{ 
+              backgroundColor: themeColors.background, 
+              borderColor: (startDate || endDate) ? themeColors.primary : themeColors.border 
+            }}
+          >
+            <div className="flex items-center gap-1.5 pl-2">
+              <FaCalendarAlt className="text-xs shrink-0" style={{ color: (startDate || endDate) ? themeColors.primary : themeColors.textSecondary }} />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setDatePreset("custom");
+                  setCurrentPage(1);
+                }}
+                className="py-1.5 px-1 bg-transparent border-0 focus:outline-none text-xs font-medium cursor-pointer"
+                style={{ color: themeColors.text }}
+                title="Start Date"
+              />
+            </div>
+            <span className="text-xs font-semibold px-0.5" style={{ color: themeColors.textSecondary }}>to</span>
+            <div className="flex items-center gap-1.5 pr-1">
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setDatePreset("custom");
+                  setCurrentPage(1);
+                }}
+                className="py-1.5 px-1 bg-transparent border-0 focus:outline-none text-xs font-medium cursor-pointer"
+                style={{ color: themeColors.text }}
+                title="End Date"
+              />
+            </div>
+            {(startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => handleDatePreset('all')}
+                title="Clear date filter"
+                className="p-1.5 rounded-md hover:opacity-80 transition cursor-pointer"
+                style={{ color: themeColors.danger || '#ef4444' }}
+              >
+                <FaTimes className="text-xs" />
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Quick Date Presets Row */}
+        <div className="flex items-center gap-2 flex-wrap text-xs pt-2 border-t" style={{ borderColor: `${themeColors.border}40` }}>
+          <span className="text-xs font-bold" style={{ color: themeColors.textSecondary }}>Quick Date:</span>
+          {[
+            { id: 'today', label: 'Today' },
+            { id: 'yesterday', label: 'Yesterday' },
+            { id: 'last7days', label: 'Last 7 Days' },
+            { id: 'thisMonth', label: 'This Month' },
+            { id: 'lastMonth', label: 'Last Month' }
+          ].map(p => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => handleDatePreset(p.id)}
+              className="px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer border"
+              style={{
+                backgroundColor: datePreset === p.id ? `${themeColors.primary}20` : 'transparent',
+                borderColor: datePreset === p.id ? themeColors.primary : themeColors.border,
+                color: datePreset === p.id ? themeColors.primary : themeColors.textSecondary,
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+          {(startDate || endDate) && (
+            <button
+              type="button"
+              onClick={() => handleDatePreset('all')}
+              className="px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer border border-red-200"
+              style={{
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+              }}
+            >
+              Reset Date
+            </button>
+          )}
         </div>
       </div>
 
